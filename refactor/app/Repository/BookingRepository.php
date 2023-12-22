@@ -91,12 +91,6 @@ class BookingRepository extends BaseRepository
      */
     public function getUsersJobsHistory($user_id, Request $request)
     {
-        $page = $request->get('page');
-        if (isset($page)) {
-            $pagenum = $page;
-        } else {
-            $pagenum = "1";
-        }
         $cuser = User::find($user_id);
         $usertype = '';
         $emergencyJobs = array();
@@ -106,7 +100,7 @@ class BookingRepository extends BaseRepository
             $usertype = 'customer';
             return ['emergencyJobs' => $emergencyJobs, 'noramlJobs' => [], 'jobs' => $jobs, 'cuser' => $cuser, 'usertype' => $usertype, 'numpages' => 0, 'pagenum' => 0];
         } elseif ($cuser && $cuser->is('translator')) {
-            $jobs_ids = Job::getTranslatorJobsHistoric($cuser->id, 'historic', $pagenum);
+            $jobs_ids = Job::getTranslatorJobsHistoric($cuser->id, 'historic', $request->page ?? 1);
             $totaljobs = $jobs_ids->total();
             $numpages = ceil($totaljobs / 15);
 
@@ -118,6 +112,7 @@ class BookingRepository extends BaseRepository
 //            $jobs['total'] = $totaljobs;
             return ['emergencyJobs' => $emergencyJobs, 'noramlJobs' => $noramlJobs, 'jobs' => $jobs, 'cuser' => $cuser, 'usertype' => $usertype, 'numpages' => $numpages, 'pagenum' => $pagenum];
         }
+        // else part is missing here , can be results in an error if above 2 conditions fail
     }
 
     /**
@@ -130,6 +125,8 @@ class BookingRepository extends BaseRepository
 
         $immediatetime = 5;
         $consumer_type = $user->userMeta->consumer_type;
+
+        // THis should be done via ACL (roles and permissions)
         if ($user->user_type == env('CUSTOMER_ROLE_ID')) {
             $cuser = $user;
 
@@ -139,6 +136,8 @@ class BookingRepository extends BaseRepository
                 $response['field_name'] = "from_language_id";
                 return $response;
             }
+
+            // These all checks should be moved to laravel request classes for validation
             if ($data['immediate'] == 'no') {
                 if (isset($data['due_date']) && $data['due_date'] == '') {
                     $response['status'] = 'fail';
@@ -742,9 +741,9 @@ class BookingRepository extends BaseRepository
     {
         $job = Job::find($id);
 
-        $current_translator = $job->translatorJobRel->where('cancel_at', Null)->first();
+        $current_translator = $job->translatorJobRel->whereNull('cancel_at')->first();
         if (is_null($current_translator))
-            $current_translator = $job->translatorJobRel->where('completed_at', '!=', Null)->first();
+            $current_translator = $job->translatorJobRel->whereNotNull('completed_at')->first();
 
         $log_data = [];
 
@@ -1380,8 +1379,8 @@ class BookingRepository extends BaseRepository
     public function acceptJob($data, $user)
     {
 
-        $adminemail = config('app.admin_email');
-        $adminSenderEmail = config('app.admin_sender_email');
+        $adminemail = config('app.admin_email'); //varibale not used anywhere should be remove
+        $adminSenderEmail = config('app.admin_sender_email'); //varibale not used anywhere should be remove
 
         $cuser = $user;
         $job_id = $data['job_id'];
@@ -1428,8 +1427,8 @@ class BookingRepository extends BaseRepository
     /*Function to accept the job with the job id*/
     public function acceptJobWithId($job_id, $cuser)
     {
-        $adminemail = config('app.admin_email');
-        $adminSenderEmail = config('app.admin_sender_email');
+        $adminemail = config('app.admin_email'); //varibale not used anywhere should be remove
+        $adminSenderEmail = config('app.admin_sender_email');//varibale not used anywhere should be remove
         $job = Job::findOrFail($job_id);
         $response = array();
 

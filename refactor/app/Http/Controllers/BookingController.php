@@ -40,10 +40,12 @@ class BookingController extends Controller
             $response = $this->repository->getUsersJobs($user_id);
 
         }
+        // here ACL should be applied, means this should be checked via roles
         elseif($request->__authenticatedUser->user_type == env('ADMIN_ROLE_ID') || $request->__authenticatedUser->user_type == env('SUPERADMIN_ROLE_ID'))
         {
             $response = $this->repository->getAll($request);
         }
+        //missing else condition, will result in undefined $response variable error
 
         return response($response);
     }
@@ -52,9 +54,10 @@ class BookingController extends Controller
      * @param $id
      * @return mixed
      */
-    public function show($id)
+    public function show($id) // missing route model binding here 
     {
         $job = $this->repository->with('translatorJobRel.user')->find($id);
+        // No need to to load via repository. Laravel's load method can work here with route model binding
 
         return response($job);
     }
@@ -78,7 +81,7 @@ class BookingController extends Controller
      * @param Request $request
      * @return mixed
      */
-    public function update($id, Request $request)
+    public function update($id, Request $request) //Route model binding is missing , also there should be a request class for validation 
     {
         $data = $request->all();
         $cuser = $request->__authenticatedUser;
@@ -93,10 +96,10 @@ class BookingController extends Controller
      */
     public function immediateJobEmail(Request $request)
     {
-        $adminSenderEmail = config('app.adminemail');
+        $adminSenderEmail = config('app.adminemail'); // this varaiable has not been used anywhere
         $data = $request->all();
 
-        $response = $this->repository->storeJobEmail($data);
+        $response = $this->repository->storeJobEmail($data); // mails should be sent via laravel's mailable classes
 
         return response($response);
     }
@@ -130,7 +133,7 @@ class BookingController extends Controller
         return response($response);
     }
 
-    public function acceptJobWithId(Request $request)
+    public function acceptJobWithId(Request $request) //missing route model binind
     {
         $data = $request->get('job_id');
         $user = $request->__authenticatedUser;
@@ -144,7 +147,7 @@ class BookingController extends Controller
      * @param Request $request
      * @return mixed
      */
-    public function cancelJob(Request $request)
+    public function cancelJob(Request $request) //missing route model binind
     {
         $data = $request->all();
         $user = $request->__authenticatedUser;
@@ -158,7 +161,7 @@ class BookingController extends Controller
      * @param Request $request
      * @return mixed
      */
-    public function endJob(Request $request)
+    public function endJob(Request $request) //missing route model binind
     {
         $data = $request->all();
 
@@ -168,7 +171,7 @@ class BookingController extends Controller
 
     }
 
-    public function customerNotCall(Request $request)
+    public function customerNotCall(Request $request) //missing route model binind
     {
         $data = $request->all();
 
@@ -182,7 +185,7 @@ class BookingController extends Controller
      * @param Request $request
      * @return mixed
      */
-    public function getPotentialJobs(Request $request)
+    public function getPotentialJobs(Request $request) //missing route model binind
     {
         $data = $request->all();
         $user = $request->__authenticatedUser;
